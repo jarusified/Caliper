@@ -98,6 +98,8 @@ class CuptiTraceService
     unsigned        num_runtime_recs        = 0;
     unsigned        num_uvm_recs            = 0;
     unsigned        num_unknown_recs        = 0;
+    unsigned        num_memory_recs         = 0;
+    unsigned        num_memory_pool_recs    = 0;
 
     unsigned        num_correlations_found  = 0;
     unsigned        num_correlations_missed = 0;
@@ -215,6 +217,108 @@ class CuptiTraceService
         }
 
         return "<unknown>";
+    }
+
+    const char *
+    get_activity_kind_string(CUpti_ActivityKind kind) 
+    {
+        switch (kind) 
+        {
+        case CUPTI_ACTIVITY_KIND_MEMORY2 || CUPTI_ACTIVITY_KIND_MEMORY:
+            return "MEMORT_ALLOC";
+        case CUPTI_ACTIVITY_KIND_MEMORY_POOL:
+            return "MEMORY_POOL";
+        case CUPTI_ACTIVITY_KIND_MEMCPY || CUPTI_ACTIVITY_KIND_MEMCPY2:
+            return "MEMCPY";
+        case CUPTI_ACTIVITY_KIND_MEMSET:
+            return "MEMSET";
+        case CUPTI_ACTIVITY_KIND_CUDA_EVENT:
+            return "CUDA_EVENT";
+        case CUPTI_ACTIVITY_KIND_STREAM:
+            return "STREAM";
+        case CUPTI_ACTIVITY_KIND_NVLINK:
+            return "NVLINK";
+        case CUPTI_ACTIVITY_KIND_PCIE:
+            return "PCIE";
+        case CUPTI_ACTIVITY_KIND_INVALID:
+            return "Invalid";
+        default:
+            break;
+        }
+        return "<unknown>";
+    }
+
+    const char *
+    get_mem_op_type_string(CUpti_ActivityMemoryOperationType type)
+    {
+        switch (type) 
+        {
+            case CUPTI_ACTIVITY_MEMORY_OPERATION_TYPE_ALLOCATION:
+                return "ALLOCATE";
+            case CUPTI_ACTIVITY_MEMORY_OPERATION_TYPE_RELEASE:
+                return "RELEASE";
+            default:
+                break;
+        }
+        return "<unknown>";
+    }
+
+    const char *
+    get_mem_kind_string(CUpti_ActivityMemoryKind kind)
+    {
+        switch (kind) 
+        {
+        case CUPTI_ACTIVITY_MEMORY_KIND_PAGEABLE:
+            return "PAGEABLE";
+        case CUPTI_ACTIVITY_MEMORY_KIND_PINNED:
+            return "PINNED";
+        case CUPTI_ACTIVITY_MEMORY_KIND_DEVICE:
+            return "DEVICE";
+        case CUPTI_ACTIVITY_MEMORY_KIND_ARRAY:
+            return "ARRAY";
+        case CUPTI_ACTIVITY_MEMORY_KIND_MANAGED:
+            return "MANAGED";
+        case CUPTI_ACTIVITY_MEMORY_KIND_DEVICE_STATIC:
+            return "DEVICE_STATIC";
+        case CUPTI_ACTIVITY_MEMORY_KIND_MANAGED_STATIC:
+            return "MANAGED_STATIC";
+        default:
+            break;
+        }
+        return "<unknown>";
+    }
+
+    const char *
+    get_mem_pool_type_string(CUpti_ActivityMemoryPoolType type)
+    {
+        switch (type) 
+        {
+        case CUPTI_ACTIVITY_MEMORY_POOL_TYPE_LOCAL:
+            return "LOCAL";
+        case CUPTI_ACTIVITY_MEMORY_POOL_TYPE_IMPORTED:
+            return "IMPORTED";
+        default:
+            break;
+        }
+        return "<unknown>";
+    }
+
+    const char *
+    get_mem_pool_op_type_string(CUpti_ActivityMemoryPoolOperationType type) 
+    {
+        switch (type) 
+        {
+        case CUPTI_ACTIVITY_MEMORY_POOL_OPERATION_TYPE_CREATED:
+            return "MEM_POOL_CREATED";
+        case CUPTI_ACTIVITY_MEMORY_POOL_OPERATION_TYPE_DESTROYED:
+            return "MEM_POOL_DESTROYED";
+        case CUPTI_ACTIVITY_MEMORY_POOL_OPERATION_TYPE_TRIMMED:
+            return "MEM_POOL_TRIMMED";
+        default:
+            break;
+        }   
+        return "<unknown>";
+
     }
 
     const char *
@@ -559,6 +663,20 @@ class CuptiTraceService
 
             return 1;
         }
+        case CUPTI_ACTIVITY_KIND_MEMORY2: 
+        {
+            CUpti_ActivityMemory3 *memory = reinterpret_cast<CUpti_ActivityMemory3*>(rec);
+            ++num_memory_recs;
+
+            return 0;
+        }
+        case CUPTI_ACTIVITY_KIND_MEMORY_POOL:
+        {
+            CUpti_ActivityMemoryPool2 *memoryPool = reinterpret_cast<CUpti_ActivityMemoryPool2*>(rec);
+            ++num_memory_pool_recs;
+
+            return 0;
+        }
         default:
             ++num_unknown_recs;
         }
@@ -754,6 +872,8 @@ class CuptiTraceService
                         << "\n  kernel records:      " << num_kernel_recs
                         << "\n  memcpy records:      " << num_memcpy_recs
                         << "\n  uvm records:         " << num_uvm_recs
+                        << "\n  memory records:      " << num_memory_recs
+                        << "\n  memory pool records  " << num_memory_pool_recs
                         << "\n  unknown records:     " << num_unknown_recs
                         << std::endl;
 
@@ -819,7 +939,8 @@ class CuptiTraceService
             { "kernel",      CUPTI_ACTIVITY_KIND_KERNEL  },
             { "memcpy",      CUPTI_ACTIVITY_KIND_MEMCPY  },
             { "uvm",         CUPTI_ACTIVITY_KIND_UNIFIED_MEMORY_COUNTER },
-
+            { "memory",      CUPTI_ACTIVITY_KIND_MEMORY2 },
+            { "memory_pool", CUPTI_ACTIVITY_KIND_MEMORY_POOL },
             { nullptr,       CUPTI_ACTIVITY_KIND_INVALID }
         };
 
